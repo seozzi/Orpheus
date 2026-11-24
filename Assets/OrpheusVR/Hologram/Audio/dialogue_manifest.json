@@ -1,0 +1,152 @@
+[
+  {
+    "id": "hades_intro",
+    "speaker": "Hades",
+    "text": "잘 왔다, 오르페우스. 너의 아내, 에우리디케를 데리러 왔다고 했지? 너의 아름다운 리라 연주에 탄복했기에 에우리디케를 다시 지상세계로 데려갈 기회를 주겠다. 지상으로 길을 올라가는 동안 에우리디케는 네 뒤를 따라갈 것이다. 다만 너는 어떤 일이 있어도 그녀를 뒤돌아봐서는 안 된다. 둘 중 하나라도 지상에 발을 디디지 못한 상태에서 둘이 얼굴을 마주한다면, 에우리디케는 영영 지하 세계에서 빠져나오지 못할 것이다. 아직 여정이 시작되기 전이니 동굴을 둘러보거라.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_intro.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "eurydice_hand",
+    "speaker": "Eurydice",
+    "text": "다시 만나면, 이렇게 내 손을 잡아 줘.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "eurydice_hand.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_start",
+    "speaker": "Hades",
+    "text": "이제 시작이다. 절대 뒤돌아보지 말고 사랑하는 사람을 지키도록. 행운을 빈다.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_start.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "spirit_doubt",
+    "speaker": "Spirit",
+    "text": "그녀가 과연 따라오고 있을까? 죽은 자는 다시 살아날 수 없어.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "spirit_doubt.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "eurydice_laugh",
+    "speaker": "Eurydice",
+    "text": "후후, 역시 너의 리라 연주는 아름다워.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "eurydice_laugh.wav",
+    "adapted": true,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "eurydice_fall",
+    "speaker": "Eurydice",
+    "text": "아아! 잠깐만, 기다려줘!",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "eurydice_fall.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "eurydice_hum",
+    "speaker": "Eurydice",
+    "text": "너의 선율이 들려. 나도 함께 따라 부를게.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "eurydice_hum.wav",
+    "adapted": true,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_warning",
+    "speaker": "Hades",
+    "text": "오르페우스, 뒤돌아보지 마라.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_warning.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_choice",
+    "speaker": "Hades",
+    "text": "에우리디케가 움직일 수 없는 상황에 처했다. 선택하라. 홀로 나갈 것인지, 앞을 보고 기약 없이 그녀가 일어나기만을 기다릴 것인지, 뒤를 돌아보고 영원히 그녀와 지하 세계에 머물 것인지.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_choice.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_wait",
+    "speaker": "Hades",
+    "text": "너는 홀로 나아가기보다 기약이 없더라도 사랑하는 이를 기다리기를 택했다. 좋다, 너의 사랑에 힘입어 회복할 에우리디케를 기다려보거라.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_wait.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "eurydice_recover",
+    "speaker": "Eurydice",
+    "text": "오르페우스, 나를 기다려줘서 고마워. 이제 일어날 수 있을 것 같아. 우리 함께 이곳에서 나가자.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "eurydice_recover.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "eurydice_exit",
+    "speaker": "Eurydice",
+    "text": "우리 드디어 온전히 밖으로 나왔어! 나를 뒤돌아봐도 돼, 오르페우스.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "eurydice_exit.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_leave",
+    "speaker": "Hades",
+    "text": "너는 기약 없는 기다림보다 홀로 나아가기를 택했다. 좋다, 너의 길을 가거라. 나가서는 뒤를 돌아봐도 된다.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_leave.wav",
+    "adapted": false,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_lost",
+    "speaker": "Hades",
+    "text": "너는 그녀를 뒤돌아보았다. 에우리디케는 이제 영원히 지하 세계에 머문다.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_lost.wav",
+    "adapted": true,
+    "clip_status": "deferred_by_user"
+  },
+  {
+    "id": "hades_stay",
+    "speaker": "Hades",
+    "text": "너는 뒤를 돌아보는 길을 선택했다. 두 사람은 영원히 이 지하 세계에 함께 머문다.",
+    "seconds": null,
+    "voice": "TTS deferred",
+    "file": "hades_stay.wav",
+    "adapted": true,
+    "clip_status": "deferred_by_user"
+  }
+]

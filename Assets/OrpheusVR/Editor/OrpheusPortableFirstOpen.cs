@@ -7,8 +7,8 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class OrpheusPortableFirstOpen
 {
-    const string Marker = "UserSettings/OrpheusPortableOpened.txt";
-    const string ScenePath = "Assets/OrpheusVR/Scenes/Orpheus_Underworld.unity";
+    const string Marker = "UserSettings/OrpheusHologramOpened.txt";
+    const string ScenePath = "Assets/OrpheusVR/Scenes/Orpheus_Underworld_HologramTest.unity";
     static OrpheusPortableFirstOpen() { EditorApplication.delayCall += OpenOnce; }
     static void OpenOnce()
     {
@@ -18,6 +18,6 @@ public static class OrpheusPortableFirstOpen
         if (SceneManager.GetActiveScene().isDirty || !File.Exists(ScenePath)) return;
         EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         Directory.CreateDirectory("UserSettings");
-        File.WriteAllText(Marker, "The v1 cave scene was opened on first import.");
+        File.WriteAllText(Marker, "The v1 hologram test scene was opened on first import.");
     }
 }

@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/OrpheusVR/Scenes/Orpheus_Underworld_HologramTest.unity
+    guid: 4791444761d5b4e79afb09ac725e6eaf
+  - enabled: 1
     path: Assets/OrpheusVR/Scenes/Orpheus_Underworld.unity
     guid: 06d95a26d75d94e51a46e22a79256f4b
   m_configObjects:
