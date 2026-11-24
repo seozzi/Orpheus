@@ -1,0 +1,23 @@
+{
+  "unity": "6000.3.26f1",
+  "pipeline": "URP 17.3.0",
+  "console_errors": 0,
+  "console_warnings": 0,
+  "mesh_triangles": 58332,
+  "navigation": {
+    "start_to_exit": "PathComplete",
+    "start_to_deadend": "PathComplete",
+    "voxel_size_m": 0.15
+  },
+  "play_mode": {
+    "automatic_walk": "completed",
+    "exit_z": 103.03,
+    "flood_surface_y": 5.05
+  },
+  "not_verified": [
+    "headset rendering/tracking",
+    "device framerate",
+    "manual hand grab interactions",
+    "production voice and endings"
+  ]
+}

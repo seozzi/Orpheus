@@ -1,0 +1,14 @@
+{
+  "layout": "Loop v2",
+  "main_arc_degrees": 285,
+  "main_radius_m": 18,
+  "cave_bounds_approx_m": {
+    "width": 44.76,
+    "depth": 49.72
+  },
+  "navmesh_connected_points": 68,
+  "auto_tour": "reached epilogue",
+  "final_story_station": 103.0104,
+  "headset_verified": false,
+  "physical_room_size": "not yet specified"
+}

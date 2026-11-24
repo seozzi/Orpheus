@@ -1,0 +1,4 @@
+Layout: radius 18m, main arc 285 degrees, smooth outward exit.
+68 waypoint / dead-end NavMesh paths: PathComplete
+Source v1 scene and geometry preserved.
+Headset and physical room scale not verified.
