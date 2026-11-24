@@ -7,7 +7,8 @@ namespace OrpheusVR
 {
     /// <summary>
     /// 오르페우스(플레이어) 리그. OVRCameraRig 부모에 붙고 CharacterController로 동굴 바닥·경사를 따라 이동.
-    /// 헤드셋: 왼손 스틱 이동(머리 방향 기준, 뒤로 당기면 뒷걸음질), 오른손 스틱 스냅 회전, A 또는 오른손 트리거 상호작용.
+    /// 헤드셋: 양팔 흔들기로 앞으로 걷기(흔드는 속도에 비례, 머리 정면 방향), 왼손 스틱 보조 이동(뒤로 당기면 뒷걸음질),
+    /// 오른손 스틱 스냅 회전, A 또는 오른손 트리거 상호작용.
     /// 에디터 데스크톱 미리보기(헤드셋 없음): WASD 이동, 마우스 오른쪽 드래그 시점, E 상호작용.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
@@ -25,6 +26,24 @@ namespace OrpheusVR
         [Range(0f, 0.9f)] public float deadZone = 0.2f;
         public bool locomotionEnabled = true;
 
+        [Header("Arm swing (팔 흔들기 이동)")]
+        public bool armSwingEnabled = true;
+        [Tooltip("켜면 그립 버튼을 쥐고 흔들 때만 이동 (일반 손동작 오작동 방지)")]
+        public bool armSwingRequireGrip = false;
+        [Tooltip("이보다 느린 팔 움직임(앞뒤 성분, m/s)은 무시")]
+        public float armSwingMinSpeed = 0.35f;
+        [Tooltip("팔 흔드는 속도 → 걷는 속도 배율")]
+        public float armSwingGain = 1.2f;
+        public float armSwingMaxSpeed = 2.0f;
+        [Tooltip("한 손만 움직일 때 인정 비율 (양손이 서로 반대로 흔들리면 1)")]
+        [Range(0f, 1f)] public float armSwingOneHandFactor = 0.3f;
+        [Tooltip("속도가 따라가는 빠르기. 클수록 즉각 반응, 작을수록 부드러움")]
+        public float armSwingSmoothing = 6f;
+        [Tooltip("흔들기를 멈춘 뒤 서서히 멈추는 빠르기")]
+        public float armSwingStopSmoothing = 10f;
+        [Tooltip("팔이 앞뒤 끝에서 잠깐 멈추는 순간에도 속도가 끊기지 않게 최근 최대값을 유지하는 시간 (초)")]
+        public float armSwingHoldSeconds = 0.3f;
+
         [Header("Desktop preview")]
         public float desktopEyeHeight = 1.6f;
         public float mouseSensitivity = 0.12f;
@@ -37,6 +56,12 @@ namespace OrpheusVR
         OVRScreenFade fader;
         float pitch, fallSpeed;
         bool turnReady = true;
+        Vector3 lastLeftLocal, lastRightLocal;
+        bool swingPrimed;
+        float swingSpeed, swingEnvelope;
+
+        /// <summary>현재 팔 흔들기로 나오는 걷기 속도 (m/s, 디버그·튜닝용)</summary>
+        public float ArmSwingSpeed => swingSpeed;
         Coroutine hapticRoutine, fadeRoutine;
 
         public bool IsXR => XRSettings.isDeviceActive;
@@ -128,8 +153,61 @@ namespace OrpheusVR
                 if (velocity.sqrMagnitude > 1f) velocity.Normalize();
                 velocity *= moveSpeed;
             }
+            UpdateArmSwing();
+            if (locomotionEnabled && swingSpeed > 0.01f)
+            {
+                // 스틱과 함께 쓰면 큰 쪽을 따름 (더해서 과속하지 않게)
+                Vector3 swing = HeadForwardFlat * swingSpeed;
+                if (swing.sqrMagnitude > velocity.sqrMagnitude) velocity = swing;
+            }
             fallSpeed = body.isGrounded ? -1f : fallSpeed - 9.81f * Time.deltaTime;
             if (body.enabled) body.Move((velocity + Vector3.up * fallSpeed) * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// 팔 흔들기 → 걷기 속도.
+        /// 손 위치를 머리 기준 상대 위치(추적 공간)로 비교해 몸 이동·스냅 회전 영향을 빼고,
+        /// 속도의 앞뒤(머리 정면) 성분만 사용. 양손이 서로 반대 방향일 때 온전히, 한 손만이면 줄여서 인정.
+        /// </summary>
+        void UpdateArmSwing()
+        {
+            float target = 0f;
+            float dt = Time.deltaTime;
+            bool active = armSwingEnabled && locomotionEnabled && IsXR && rig && head && rig.trackingSpace && dt > 1e-5f;
+            if (active)
+            {
+                Vector3 headLocal = head.localPosition;
+                Vector3 l = rig.leftHandAnchor.localPosition - headLocal;
+                Vector3 r = rig.rightHandAnchor.localPosition - headLocal;
+                if (swingPrimed)
+                {
+                    // 추적 공간 속도 → 월드 방향 → 머리 정면 성분
+                    Vector3 fwd = HeadForwardFlat;
+                    float vl = Vector3.Dot(rig.trackingSpace.TransformDirection((l - lastLeftLocal) / dt), fwd);
+                    float vr = Vector3.Dot(rig.trackingSpace.TransformDirection((r - lastRightLocal) / dt), fwd);
+                    bool gripOk = !armSwingRequireGrip
+                                  || (OVRInput.Get(OVRInput.RawAxis1D.LHandTrigger) > 0.5f && OVRInput.Get(OVRInput.RawAxis1D.RHandTrigger) > 0.5f);
+                    if (gripOk)
+                    {
+                        float al = Mathf.Abs(vl), ar = Mathf.Abs(vr);
+                        bool opposite = vl * vr < 0f;
+                        float both = (al + ar) * 0.5f;
+                        float swing = opposite ? both : Mathf.Max(al, ar) * armSwingOneHandFactor;
+                        // 진자 운동의 끝점(속도 0)에서 끊기지 않도록 최근 최대값을 서서히 낮추며 유지
+                        swingEnvelope = Mathf.Max(swing, swingEnvelope * Mathf.Exp(-dt / Mathf.Max(armSwingHoldSeconds, 0.01f)));
+                    }
+                    else swingEnvelope = 0f;
+                    if (swingEnvelope > armSwingMinSpeed)
+                        target = Mathf.Min((swingEnvelope - armSwingMinSpeed) * armSwingGain + 0.3f, armSwingMaxSpeed);
+                }
+                lastLeftLocal = l; lastRightLocal = r;
+                swingPrimed = true;
+            }
+            else { swingPrimed = false; swingEnvelope = 0f; }
+
+            float k = target > swingSpeed ? armSwingSmoothing : armSwingStopSmoothing;
+            swingSpeed = Mathf.Lerp(swingSpeed, target, 1f - Mathf.Exp(-k * dt));
+            if (target == 0f && swingSpeed < 0.02f) swingSpeed = 0f;
         }
 
         /// <summary>몸을 기울이거나 실제로 걸어도 충돌 캡슐이 머리 아래에 오도록</summary>

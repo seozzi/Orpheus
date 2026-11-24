@@ -26,8 +26,8 @@ namespace OrpheusVR
         public Transform hades;
         public Transform eurydiceEnter;
         public Transform handhold;
-        [Tooltip("에우리디케 임시 형상 (나중에 2D 홀로그램으로 교체)")]
-        public GameObject eurydiceFigure;
+        [Tooltip("에우리디케 2D 홀로그램 (EurydiceHologram 프리팹 + EurydiceCompanion)")]
+        public EurydiceCompanion eurydice;
         public GameObject handholdGlow;
 
         [Header("S2")]
@@ -54,7 +54,7 @@ namespace OrpheusVR
 
         [Header("상태 (읽기 전용)")]
         public Stage stage = Stage.Intro;
-        public bool lost, lyrePlayed, guideShown, flooding, drained, choseWait;
+        public bool lost, lyrePlayed, guideShown, flooding, drained, choseWait, stayed;
         public float station;
 
         const string HADES = "하데스", EURY = "에우리디케", NARR = "";
@@ -74,7 +74,7 @@ namespace OrpheusVR
         {
             if (water) waterBase = water.position.y;
             fogBase = RenderSettings.fogDensity;
-            if (eurydiceFigure) eurydiceFigure.SetActive(false);
+            if (eurydice) eurydice.Hide(0f);
             if (handholdGlow) handholdGlow.SetActive(false);
             if (alternateGuide) alternateGuide.SetActive(false);
             yield return null;
@@ -106,10 +106,12 @@ namespace OrpheusVR
             judge.armed = false;
 
             // 에우리디케 등장, 손 내밀기
-            if (eurydiceFigure)
+            if (eurydice)
             {
-                if (eurydiceEnter) eurydiceFigure.transform.position = OnGround(eurydiceEnter.position);
-                eurydiceFigure.SetActive(true);
+                // 왼쪽 입구에서 나타나 손잡는 자리 옆까지 걸어옴
+                Vector3 from = eurydiceEnter ? eurydiceEnter.position : player.FeetPosition + player.HeadForwardFlat * 3f;
+                Vector3 to = handhold ? Vector3.Lerp(from, handhold.position, 0.85f) : from;
+                eurydice.Appear(from, to);
             }
             if (handholdGlow) handholdGlow.SetActive(true);
             subtitle.Say(EURY, "다시 만나면, 이렇게 내 손을 잡아 줘.");
@@ -125,9 +127,10 @@ namespace OrpheusVR
 
             // 손이 놓이고 귀환 경로 시작점으로 지점 이동
             yield return player.Fade(1f, 0.8f);
-            if (eurydiceFigure) eurydiceFigure.SetActive(false);
+            if (eurydice) eurydice.Hide(0f);
             if (route && route.IsValid) player.TeleportTo(route.points[0], route.points[1]);
             yield return new WaitForSeconds(0.3f);
+            if (eurydice) eurydice.StartFollowing(); // 이제부터 플레이어 뒤에서 따라옴 (뒤돌아보면 보임)
             yield return player.Fade(0f, 1f);
             BeginJourney();
         }
@@ -156,7 +159,7 @@ namespace OrpheusVR
                         lyrePlayed = true;
                         player.Haptic(0.3f, 0.4f, false);
                         subtitle.Say(NARR, "(리라 연주 소리가 들리자 정령들이 순식간에 조용해진다)");
-                        if (!lost) subtitle.Say(NARR, "(뒤에서 에우리디케의 작은 웃음소리)");
+                        if (!lost) subtitle.Say(EURY, "후후, 역시 너의 리라 연주는 아름다워.");
                     }
                     if (station >= route.forkStart) { stage = Stage.Fork; recorder.MarkSection("구간 2"); }
                     break;
@@ -214,29 +217,51 @@ namespace OrpheusVR
 
         void OnLookedBack()
         {
-            if (lost) return;
+            if (lost || stayed) return;
+            // 선택 지점에서 뒤돌아보기 = 세 번째 선택지 '뒤돌아보고 함께 머물기'
+            if (stage == Stage.Choice && choiceAsked) { StartCoroutine(StaySequence()); return; }
+
             lost = true;
             player.Haptic(0.9f, 0.6f);
             subtitle.Clear();
-            subtitle.Say(NARR, "(뒤돌아본 순간, 에우리디케가 빛으로 흩어진다)");
+            subtitle.Say(HADES, "너는 그녀를 뒤돌아보았다. 에우리디케는 이제 영원히 지하 세계에 머문다.");
             subtitle.Say(NARR, "(남은 길은 홀로 가야 한다)");
             StartCoroutine(ShowLostEurydice());
         }
 
         IEnumerator ShowLostEurydice()
         {
-            if (!eurydiceFigure) yield break;
-            Vector3 behind = player.FeetPosition + player.HeadForwardFlat * 1.5f;
-            eurydiceFigure.transform.position = OnGround(behind);
-            eurydiceFigure.SetActive(true);
-            yield return new WaitForSeconds(1.8f);
-            eurydiceFigure.SetActive(false);
+            if (!eurydice) yield break;
+            // 뒤에서 따라오던(또는 넘어져 있던) 그 자리에서 잠깐 마주친 뒤 빛으로 흩어짐
+            if (!eurydice.Visible) eurydice.StandAt(player.FeetPosition + player.HeadForwardFlat * 1.5f, false, 0.3f);
+            yield return new WaitForSeconds(1.2f);
+            eurydice.Vanish();
+        }
+
+        IEnumerator StaySequence()
+        {
+            stayed = true;
+            stage = Stage.Epilogue;
+            judge.armed = false;
+            player.locomotionEnabled = false;
+            player.Haptic(0.5f, 0.6f);
+            subtitle.Clear();
+            if (eurydice) eurydice.Reveal();
+            subtitle.Say(HADES, "너는 뒤를 돌아보는 길을 선택했다. 두 사람은 영원히 이 지하 세계에 함께 머문다.");
+            yield return WaitSubtitles(1f);
+            recorder.Reveal(endingGaze);
+            yield return new WaitForSeconds(epilogueSeconds);
+            subtitle.Say(NARR, "(체험이 끝났습니다)", 6f);
+            stage = Stage.Finished;
+            yield return new WaitForSeconds(5f);
+            yield return player.Fade(1f, 2f);
         }
 
         IEnumerator FloodSequence()
         {
             if (!lost)
             {
+                if (eurydice) eurydice.Fall(eurydiceFall);
                 subtitle.Say(EURY, "아아! 잠깐만, 기다려줘!", 3f);
                 player.Haptic(0.6f, 0.3f);
             }
@@ -330,6 +355,7 @@ namespace OrpheusVR
             subtitle.Say(HADES, "좋다, 너의 사랑에 힘입어 회복할 에우리디케를 기다려보거라.");
             yield return WaitSubtitles(0);
             yield return new WaitForSeconds(waitSeconds);
+            if (eurydice) eurydice.Recover(); // 일어나 다시 뒤에서 따라옴
             subtitle.Say(EURY, "오르페우스, 나를 기다려줘서 고마워.");
             subtitle.Say(EURY, "이제 일어날 수 있을 것 같아. 우리 함께 이곳에서 나가자.");
             yield return WaitSubtitles(0);
@@ -350,17 +376,14 @@ namespace OrpheusVR
             if (choseWait && !lost)
             {
                 subtitle.Say(EURY, "우리 드디어 온전히 밖으로 나왔어! 나를 뒤돌아봐도 돼, 오르페우스.");
-                if (eurydiceFigure && reunion) { eurydiceFigure.transform.position = OnGround(reunion.position); eurydiceFigure.SetActive(true); }
+                if (eurydice && reunion) eurydice.StandAt(reunion.position, false);
             }
             else
             {
                 subtitle.Say(NARR, "(바깥세상에 발을 디뎠다. 이제 지나온 통로를 뒤돌아보자)");
                 // 통로 속을 떠도는 에우리디케의 영혼: 출구에서 뒤돌아봤을 때 보이는 마지막 직선 구간에
-                if (eurydiceFigure && route && route.IsValid)
-                {
-                    eurydiceFigure.transform.position = OnGround(route.points[route.points.Length - 2].position);
-                    eurydiceFigure.SetActive(true);
-                }
+                if (eurydice && route && route.IsValid)
+                    eurydice.StandAt(route.points[route.points.Length - 2].position, true);
             }
             yield return new WaitForSeconds(epilogueSeconds);
             subtitle.Say(NARR, "(체험이 끝났습니다)", 6f);
@@ -380,13 +403,6 @@ namespace OrpheusVR
         {
             var kb = Keyboard.current;
             return kb != null && kb.enterKey.wasPressedThisFrame;
-        }
-
-        /// <summary>바로 아래 바닥 위치 (충돌체 기준). 못 찾으면 그대로</summary>
-        static Vector3 OnGround(Vector3 p)
-        {
-            RaycastHit hit;
-            return Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out hit, 6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.point : p;
         }
 
         static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }

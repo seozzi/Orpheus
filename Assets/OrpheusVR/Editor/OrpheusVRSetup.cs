@@ -20,6 +20,7 @@ namespace OrpheusVR.Editor
         const string Target = "Assets/OrpheusVR/Scenes/Orpheus_VR_Main.unity";
         const string RigPrefab = "Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab";
         const string MatFolder = "Assets/OrpheusVR/Materials";
+        const string EurydicePrefab = "Assets/OrpheusVR/Hologram/Materials/EurydiceHologram.prefab";
         const string ExperienceRoot = "ORPHEUS - VR Experience";
         const string PlayerRoot = "Orpheus Player (VR)";
 
@@ -135,19 +136,20 @@ namespace OrpheusVR.Editor
             flow.reunion = Find("Eurydice recovery and reunion");
             flow.endingGaze = Find("Ending gaze / journey trace");
 
-            // 에우리디케 임시 형상: 반투명 캡슐 (2D 홀로그램 PNG가 오면 교체)
-            var figure = new GameObject("Eurydice (placeholder - replace with hologram)");
-            figure.transform.SetParent(exp.transform, false);
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            body.name = "Body";
-            body.transform.SetParent(figure.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.85f, 0f);
-            body.transform.localScale = new Vector3(0.45f, 0.85f, 0.45f);
-            body.GetComponent<Renderer>().sharedMaterial = soul;
-            figure.AddComponent<FaceViewer>();
-            figure.SetActive(false);
-            flow.eurydiceFigure = figure;
+            // 에우리디케: 2D 홀로그램 프리팹 (상준 v2) + VR 흐름 연결 부품
+            GameObject holoPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(EurydicePrefab);
+            if (holoPrefab)
+            {
+                var holo = (GameObject)PrefabUtility.InstantiatePrefab(holoPrefab, exp.transform);
+                holo.name = "Eurydice (hologram)";
+                var actor = holo.GetComponent<OrpheusVR.Hologram.EurydiceHologramActor>();
+                if (actor && centerEye) actor.viewer = centerEye.GetComponent<Camera>();
+                var companion = holo.AddComponent<EurydiceCompanion>();
+                companion.actor = actor; companion.player = player; companion.route = route;
+                flow.eurydice = companion;
+                report.Add("에우리디케: " + EurydicePrefab);
+            }
+            else Debug.LogWarning("[OrpheusVR] 에우리디케 홀로그램 프리팹 없음: " + EurydicePrefab);
 
             if (flow.handhold)
             {

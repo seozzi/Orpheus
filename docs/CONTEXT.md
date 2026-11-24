@@ -23,7 +23,7 @@
 ## 3. 결정된 것
 - 캐릭터는 3D 모델 대신 **2D 투명 PNG 홀로그램**: Quad + Unlit 투명 + Y축 빌보드 + 디졸브(노이즈→임계값→알파). 대사는 TTS로 오디오 파일을 만들어 넣을 예정(현재 보류, 자막만).
 - 물: Plane 한 장 + 가벼운 물 셰이더, 수위 상한 가슴 높이. 긴박감은 소리·진동·조명·낙석으로. 카메라 흔들기 금지. 포스트프로세싱·굴절·실시간 반사 금지. 목표 72fps.
-- 이동: 왼손 스틱(머리 방향 기준, 뒤로 당기면 뒷걸음질), 오른손 스냅 회전. 동굴 경사는 CharacterController로 따라감.
+- 이동: **양팔 흔들기**(흔드는 속도에 비례해 머리 정면으로 걷기, 앞뒤 성분만·양손 반대 방향일 때 온전히 인정, 2026-11-24 결정·멘토 조언 반영) + 왼손 스틱 보조(뒤로 당기면 뒷걸음질, S2-2용), 오른손 스냅 회전. 동굴 경사는 CharacterController로 따라감. 조정 값은 `OrpheusPlayer`의 Arm swing 항목.
 - 엔딩 궤적: 통로가 꺾여 지상에서 다 안 보이므로, 실제 통로 위 궤적 + 출구 위 축소 지도 두 가지로 보여 줌.
 - 개발 PC가 macOS라 Quest Link 불가 → 에디터 데스크톱 미리보기, Meta XR Simulator, Build And Run으로 테스트.
 
@@ -45,6 +45,10 @@
 - 셰이더 `Hologram/Shaders/EurydiceHologram.shader`(URP Unlit, _Dissolve/_Opacity/Cyan Glow). 텍스처 `*_softglow.png` 적용본.
 - 데스크톱 에디터에서 시나리오 검사 14개 통과(헤드셋 미검증). 테스트 키 1~8, F 자동, R 리셋.
 - 주의: 셰이더 이름이 단안/양안(Single Pass Instanced) 대응인지 헤드셋에서 확인 필요.
+
+### 통합 진행 (2026-11-24)
+- `EurydiceCompanion`(Experience 폴더)이 B의 `EurydiceHologramActor`를 VR 흐름에 연결. OrpheusFlow는 캡슐 대신 이를 사용(등장·동행 2.5m·넘어짐·회복·소멸·선택 지점 뒤돌아보기=함께 남기 결말). Setup 메뉴가 `Hologram/Materials/EurydiceHologram.prefab`을 배치.
+- 에디터 Play에서 등장·동행 확인. 넘어짐 이후 구간은 미확인. `EurydiceDirector`·HologramTest 씬은 아직 그대로(정리 미정).
 
 ### 겹치는 부분
 회전 판정, 상실 처리, 선택 분기, 자막이 A·B 양쪽에 있음. B는 VR 리그가 아닌 `OrpheusCaveExperience`(데스크톱 카메라)에 묶여 있음.
