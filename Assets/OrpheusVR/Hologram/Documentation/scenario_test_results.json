@@ -1,0 +1,76 @@
+{
+    "testedAt": "2026-11-24T07:28:03.0241270Z",
+    "passed": true,
+    "checks": [
+        {
+            "name": "intro and transparent appearance",
+            "passed": true,
+            "detail": "phase=Handhold, ready=True | phase=Handhold"
+        },
+        {
+            "name": "handhold starts return",
+            "passed": true,
+            "detail": "phase=Following | phase=Following"
+        },
+        {
+            "name": "follows player trail",
+            "passed": true,
+            "detail": " | phase=Following"
+        },
+        {
+            "name": "look-back pending is cancellable",
+            "passed": true,
+            "detail": " | phase=Following"
+        },
+        {
+            "name": "look-back timer resets",
+            "passed": true,
+            "detail": " | phase=Following"
+        },
+        {
+            "name": "120 degrees two seconds loses Eurydice",
+            "passed": true,
+            "detail": " | phase=Lost"
+        },
+        {
+            "name": "flood triggers fallen PNG",
+            "passed": true,
+            "detail": " | phase=Fallen"
+        },
+        {
+            "name": "injured character stays behind",
+            "passed": true,
+            "detail": " | phase=Fallen"
+        },
+        {
+            "name": "recovery waits at least four seconds",
+            "passed": true,
+            "detail": " | phase=Waiting"
+        },
+        {
+            "name": "waiting recovers standing character",
+            "passed": true,
+            "detail": " | phase=Following"
+        },
+        {
+            "name": "both outside enables reunion",
+            "passed": true,
+            "detail": " | phase=Returned"
+        },
+        {
+            "name": "leave-alone branch",
+            "passed": true,
+            "detail": " | phase=Alone"
+        },
+        {
+            "name": "turn at final choice stays underground",
+            "passed": true,
+            "detail": " | phase=Stay"
+        },
+        {
+            "name": "guided demo reaches return ending",
+            "passed": true,
+            "detail": "phase=Returned, station=103.5884 | phase=Returned"
+        }
+    ]
+}

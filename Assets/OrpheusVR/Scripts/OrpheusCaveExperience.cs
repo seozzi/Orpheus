@@ -9,6 +9,17 @@ namespace OrpheusVR
     public class OrpheusCaveExperience : MonoBehaviour
     {
         public Camera view;
+        public OrpheusVR.Hologram.EurydiceDirector hologram;
+        public bool scenarioHold;
+        public bool PreviewActionRequested;
+        public string SelectedEnding="";
+        public bool JourneyStarted {get{return journeyStarted;}}
+        public bool IsFlooded {get{return flooded;}}
+        public bool IsDrained {get{return drained;}}
+        public bool LyrePlayed {get{return played;}}
+        public bool IsLost {get{return lost;}}
+        public float StoryStation {get{return loopLayout?NearestStoryStation():transform.position.z;}}
+        public Vector3 RouteTangent {get{return PathTangent();}}
         public Transform water, resonanceStone, lyre, waitChoice, leaveChoice;
         public GameObject alternateGuide;
         public Transform[] route;
@@ -27,6 +38,12 @@ namespace OrpheusVR
         Vector3 checkpoint;
         string message = "Explore the chamber. E / controller A: interact. Enter: begin the return.";
 
+        void Awake()
+        {
+            body=GetComponent<CharacterController>();
+            if(water)waterBase=water.position.y;
+        }
+
         void Start()
         {
             body = GetComponent<CharacterController>();
@@ -43,7 +60,8 @@ namespace OrpheusVR
             if (kb != null && kb.escapeKey.wasPressedThisFrame) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
             bool xr = XRSettings.isDeviceActive;
             Vector2 move = Vector2.zero;
-            bool interact = kb != null && kb.eKey.wasPressedThisFrame;
+            bool interact = PreviewActionRequested || (kb != null && kb.eKey.wasPressedThisFrame);
+            PreviewActionRequested=false;
             bool begin = kb != null && kb.enterKey.wasPressedThisFrame;
             if (xr)
             {
@@ -73,7 +91,8 @@ namespace OrpheusVR
                 {
                     move.x=(kb.dKey.isPressed?1:0)-(kb.aKey.isPressed?1:0);
                     move.y=(kb.wKey.isPressed?1:0)-(kb.sKey.isPressed?1:0);
-                    if (kb.fKey.wasPressedThisFrame) { demoAutowalk=!demoAutowalk; if(demoAutowalk && (loopLayout ? !journeyStarted : transform.position.z<9)) BeginJourney(); }
+                    if (kb.fKey.wasPressedThisFrame && hologram!=null)hologram.StartGuidedDemo();
+                    else if (kb.fKey.wasPressedThisFrame) { demoAutowalk=!demoAutowalk; if(demoAutowalk && (loopLayout ? !journeyStarted : transform.position.z<9)) BeginJourney(); }
                 }
                 if (Mouse.current != null && Mouse.current.rightButton.isPressed)
                 {
@@ -83,19 +102,33 @@ namespace OrpheusVR
                     view.transform.localRotation=Quaternion.Euler(pitch,0,0);
                 }
             }
+            if(hologram!=null) {begin=false;if(hologram.CanStartJourney && interact){hologram.RequestJourney();interact=false;}}
             if (begin && (loopLayout ? !journeyStarted : transform.position.z<9)) BeginJourney();
-            if (demoAutowalk && !xr && route!=null && route.Length>0)
+            Vector3 automaticDirection=Vector3.zero;
+            if (demoAutowalk && !scenarioHold && !xr && route!=null && route.Length>0)
             {
                 var target=route[Mathf.Clamp(waypoint,0,route.Length-1)].position;
                 Vector3 d=target-transform.position; d.y=0;
-                if(d.magnitude<1.2f && waypoint<route.Length-1) waypoint++;
+                if(d.magnitude<1.2f && waypoint<route.Length-1){waypoint++;target=route[waypoint].position;}
+                if(hologram!=null && hologram.guidedDemo)
+                {
+                    UnityEngine.AI.NavMeshHit a,b;
+                    var path=new UnityEngine.AI.NavMeshPath();
+                    if(UnityEngine.AI.NavMesh.SamplePosition(transform.position,out a,2,-1)&&UnityEngine.AI.NavMesh.SamplePosition(target,out b,2,-1)&&UnityEngine.AI.NavMesh.CalculatePath(a.position,b.position,-1,path)&&path.corners.Length>1)
+                    {
+                        target=path.corners[1];
+                        if(Vector3.ProjectOnPlane(target-transform.position,Vector3.up).magnitude<.45f && path.corners.Length>2)target=path.corners[2];
+                    }
+                    d=target-transform.position;d.y=0;automaticDirection=d.normalized;
+                }
                 if(d.sqrMagnitude>.1f) { var q=Quaternion.LookRotation(d); transform.rotation=Quaternion.RotateTowards(transform.rotation,q,50*Time.deltaTime); yaw=transform.eulerAngles.y; move=Vector2.up; }
             }
             Vector3 forward=Vector3.ProjectOnPlane(view.transform.forward,Vector3.up).normalized;
             Vector3 right=Vector3.Cross(Vector3.up,forward);
             Vector3 velocity=(forward*move.y+right*move.x);
+            if(automaticDirection.sqrMagnitude>.01f)velocity=automaticDirection;
             if (velocity.sqrMagnitude>1) velocity.Normalize();
-            if(waiting || finished) velocity=Vector3.zero;
+            if(waiting || finished || scenarioHold) velocity=Vector3.zero;
             body.Move((velocity*speed+Vector3.down*3)*Time.deltaTime);
             if(transform.position.y<-10) MoveTo(checkpoint);
 
@@ -103,7 +136,7 @@ namespace OrpheusVR
             if(loopLayout && z>12)journeyStarted=true;
             if(loopLayout && !journeyStarted)z=0;
             stage=z<9?"S1 / Hades chamber":z<43?"S2-1 / Lyre passage":z<58?"S2-2 / Blind fork":z<82?"S2-3 / Flood gallery":z<100?"S3 / The choice":"Epilogue / Daylight";
-            if(z>10 && z<100 && !lost)
+            if(z>10 && z<100 && !lost && hologram==null)
             {
                 Vector3 tangent=PathTangent();
                 float angle=Vector3.Angle(tangent,forward);
@@ -124,14 +157,14 @@ namespace OrpheusVR
                 else if(resonanceStone && Vector3.Distance(view.transform.position,resonanceStone.position)<3 && flooded && Time.time-floodTime>5)
                 { drained=true; message=played?"The remembered melody resonates. The water recedes.":"The stone resonates. The water recedes. (Map preview)"; }
                 else if(waitChoice && Vector3.Distance(view.transform.position,waitChoice.position)<3)
-                { waiting=true; waitUntil=Time.time+4; message=lost?"Only silence answers. Continue to the exit.":"You chose to wait for Eurydice."; }
+                { SelectedEnding="wait"; waiting=hologram==null; waitUntil=Time.time+4; message=lost?"Only silence answers. Continue to the exit.":"You chose to wait for Eurydice."; }
                 else if(leaveChoice && Vector3.Distance(view.transform.position,leaveChoice.position)<3)
-                { message="You chose to leave alone. Follow the light."; }
+                { SelectedEnding="alone"; message="You chose to leave alone. Follow the light."; }
             }
             if(waiting && Time.time>waitUntil) { waiting=false; message=lost?"Continue alone.":"Eurydice has recovered. Leave together."; }
-            if(z>103 && !finished) { finished=true; message=lost?"Daylight. You returned alone.":"Daylight. Map preview complete."; }
+            if(z>103 && !finished && (hologram==null || hologram.CanExit)) { finished=true; message=lost?"Daylight. You returned alone.":"Daylight. Map preview complete."; }
         }
-        void BeginJourney()
+        public void BeginJourney()
         {
             journeyStarted=true;waypoint=1;
             MoveTo(loopLayout && route!=null && route.Length>1 ? route[0].position : new Vector3(0,.25f,10));
@@ -150,6 +183,22 @@ namespace OrpheusVR
                 if(dist<best){best=dist;result=Mathf.Lerp(routeStations[i],routeStations[i+1],t);}
             }
             return result;
+        }
+        public void MarkEurydiceLost(){lost=true;message="Eurydice is lost.";}
+        public void SetPreviewLocation(Vector3 p,Vector3 forward)
+        {
+            if(body==null)body=GetComponent<CharacterController>();MoveTo(p);
+            forward.y=0;if(forward.sqrMagnitude>.001f)transform.rotation=Quaternion.LookRotation(forward);
+            yaw=transform.eulerAngles.y;pitch=0;if(view)view.transform.localRotation=Quaternion.identity;
+        }
+        public void ResetScenarioPreview()
+        {
+            if(body==null)body=GetComponent<CharacterController>();
+            flooded=drained=played=lost=waiting=finished=false;journeyStarted=false;SelectedEnding="";PreviewActionRequested=false;demoAutowalk=false;scenarioHold=false;
+            waypoint=0;turnHold=0;stage="S1 / Hades chamber";
+            if(water){var p=water.position;p.y=waterBase;water.position=p;}
+            if(alternateGuide)alternateGuide.SetActive(false);
+            SetPreviewLocation(new Vector3(0,.2f,-3),Vector3.forward);
         }
         bool lastA,turnReady=true;
         Vector3 PathTangent()
