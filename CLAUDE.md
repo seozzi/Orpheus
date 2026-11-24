@@ -3,6 +3,8 @@
 가상현실입문 5조 「사랑으로 그린 망설임」. 사용자는 오르페우스가 되어 지하세계에서 에우리디케를 데리고 나온다.
 뒤돌아보면(120° 이상 2초) 그녀를 잃는다. 끝나면 지나온 길과 머문 시간이 빛의 궤적으로 보인다.
 
+**새 세션은 `docs/CONTEXT.md`(기획·결정·현재 코드 상태·다음 할 일)를 먼저 읽을 것.**
+
 ## 환경 (버전 고정, 바꾸지 말 것)
 - Unity 6000.3.26f1, URP 17.3, Meta XR SDK 207.0.1 (OVRCameraRig, OVRInput), Input System
 - MCP for Unity (CoplayDev) v10.3.0, Claude Code
