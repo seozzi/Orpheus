@@ -41,3 +41,7 @@ CLAUDE.local.md
 
 # MCP for Unity 런타임 파일
 /[Ll]ibrary/MCPForUnity/
+
+# 로컬 전용
+*.slnx
+/Assets/Resources/DevAgentSettings.asset*
