@@ -17,13 +17,13 @@ namespace OrpheusVR.Editor
         static Mesh rockMesh;
         static System.Random rng;
         static int meshSerial;
-        static readonly Vector3[] route={
+        internal static readonly Vector3[] route={
             new Vector3(0,0,10),new Vector3(0,0,19),new Vector3(6,0,26),new Vector3(15,0,30),
             new Vector3(18,0,39),new Vector3(18,0,47),new Vector3(24,0,52),new Vector3(29,0,59),
             new Vector3(29,0,68),new Vector3(25,0,78),new Vector3(25,0,87),new Vector3(25,0,96),new Vector3(25,0,109)};
         struct Segment { public Vector3 a,b; public float r0,r1,h0,h1; public Segment(Vector3 p,Vector3 q,float r,float s,float h,float j){a=p;b=q;r0=r;r1=s;h0=h;h1=j;} }
         static List<Segment> segments;
-        static float Ground(float z){return Mathf.Clamp((z-15)*.082f,0,6.9f);}
+        internal static float Ground(float z){return Mathf.Clamp((z-15)*.082f,0,6.9f);}
         static Vector3 P(float x,float z,float y=0){return new Vector3(x,Ground(z)+y,z);}
         static Transform Group(string n,Transform parent){var g=new GameObject(n);g.transform.SetParent(parent,false);return g.transform;}
         static float Rand(float a,float b){return Mathf.Lerp(a,b,(float)rng.NextDouble());}
@@ -63,7 +63,7 @@ namespace OrpheusVR.Editor
         }
 
         static void Save(Object obj,string path){AssetDatabase.CreateAsset(obj,AssetDatabase.GenerateUniqueAssetPath(path));}
-        static void SetupSegments()
+        internal static void SetupSegments()
         {
             segments=new List<Segment>();
             segments.Add(new Segment(new Vector3(0,0,-2),route[0],8,3.2f,8,4.8f));
@@ -77,7 +77,7 @@ namespace OrpheusVR.Editor
             segments.Add(new Segment(new Vector3(9,0,52),new Vector3(5,0,58),2.8f,2.4f,4.6f,4));
         }
 
-        static float Field(Vector3 p)
+        internal static float Field(Vector3 p)
         {
             float f=999;
             foreach(var s in segments)
